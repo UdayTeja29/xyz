@@ -1,0 +1,54 @@
+import csv
+from datetime import datetime, timedelta
+
+# Function to calculate the duration between two datetime objects
+def calculate_duration(start_time, end_time):
+    return (end_time - start_time).total_seconds() / 3600  # Convert to hours
+
+# Function to check if an employee worked for 7 consecutive days
+def has_worked_consecutive_days(shifts):
+    consecutive_work_days = 0
+    for i in range(len(shifts) - 1):
+        current_shift_end = shifts[i][1]
+        next_shift_start = shifts[i + 1][0]
+        if (next_shift_start - current_shift_end).days == 1:
+            consecutive_work_days += 1
+            if consecutive_work_days >= 7:
+                return True
+        else:
+            consecutive_work_days = 0
+    return False
+
+# Function to analyze the input file
+def analyze_employee_shifts(input_file):
+    employees = {}  # Dictionary to store employee data (name and shifts)
+    
+    with open(input_file, 'r') as csvfile:
+        reader = csv.reader(csvfile)
+        next(reader)  # Skip the header row
+        
+        for row in reader:
+            employee_name = row[0]
+            shift_start_time = datetime.strptime(row[1], '%Y-%m-%d %H:%M:%S')
+            shift_end_time = datetime.strptime(row[2], '%Y-%m-%d %H:%M:%S')
+            
+            if employee_name not in employees:
+                employees[employee_name] = []
+            
+            employees[employee_name].append((shift_start_time, shift_end_time))
+    
+    # Analyze employee data
+    for name, shifts in employees.items():
+        consecutive_days = has_worked_consecutive_days(shifts)
+        for i in range(len(shifts) - 1):
+            time_between_shifts = calculate_duration(shifts[i][1], shifts[i + 1][0])
+            if 1 < time_between_shifts < 10:
+                print(f"{name} has less than 10 hours between shifts.")
+            if calculate_duration(shifts[i][0], shifts[i][1]) > 14:
+                print(f"{name} has worked for more than 14 hours in a single shift.")
+        if consecutive_days:
+            print(f"{name} has worked for 7 consecutive days.")
+
+if __name__ == "__main__":
+    input_file = 'employee_shifts.csv'  # Replace with your input file path
+    analyze_employee_shifts(input_file)
